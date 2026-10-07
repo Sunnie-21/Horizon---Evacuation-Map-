@@ -1,0 +1,434 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Horizon Evacuation Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: wayfinding-sign header band, route finder on top, two floor plans side by side, rules and legend below. */
+:root{
+  --bg:#e8ecf1; --paper:#ffffff; --ink:#122033; --muted:#4b5b70; --line:#c9d2de;
+  --band:#0b3d91; --band-ink:#ffffff;
+  --class:#1a73d9; --class-ink:#ffffff;
+  --office:#f5c400; --office-ink:#1d1700;
+  --yard:#f58a1f; --yard-ink:#2a1500;
+  --grass:#58b247; --grass-ink:#0f2a0a;
+  --plain:#ffffff; --open:#eef2f7; --wall:#1b2a3c; --garden:#dfe9d6; --dot:#7d9a6a;
+  --route:#0a8a4b; --route-case:#ffffff; --accent:#e5391f;
+  --stair:#dfe5ec;
+  --f-display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c121b; --paper:#141d29; --ink:#e8eef6; --muted:#a2b1c4; --line:#2b3a4e;
+    --band:#12489f; --class:#2f7fe0; --office:#d9ac00; --yard:#e2801a; --grass:#3f8f35;
+    --plain:#1c2837; --open:#182231; --wall:#8ea1b8; --garden:#1f3020; --dot:#4f7a45;
+    --route:#3ddc84; --route-case:#0c121b; --accent:#ff6a4d; --stair:#2a3a4d;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c121b; --paper:#141d29; --ink:#e8eef6; --muted:#a2b1c4; --line:#2b3a4e;
+  --band:#12489f; --class:#2f7fe0; --office:#d9ac00; --yard:#e2801a; --grass:#3f8f35;
+  --plain:#1c2837; --open:#182231; --wall:#8ea1b8; --garden:#1f3020; --dot:#4f7a45;
+  --route:#3ddc84; --route-case:#0c121b; --accent:#ff6a4d; --stair:#2a3a4d;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:20px 40px}
+.wrap{max-width:1360px;margin-inline:auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.05;text-wrap:balance}
+
+.band{background:var(--band);color:var(--band-ink);display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justify-content:space-between;padding:20px 24px}
+.band .kicker{margin:0 0 4px;font-family:var(--f-display);font-weight:600;font-size:20px;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.band h1{font-size:clamp(40px,7vw,68px);font-weight:800;letter-spacing:.01em;text-transform:uppercase}
+.band .sub{margin:6px 0 0;font-size:16px;opacity:.9}
+.assembly{background:var(--yard);color:var(--yard-ink);padding:12px 20px;min-width:min(100%,280px)}
+.assembly span{display:block;font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase}
+.assembly strong{display:block;font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1;text-transform:uppercase}
+.assembly em{display:block;font-style:normal;font-weight:600;font-size:15px}
+
+.finder{background:var(--paper);border:1px solid var(--line);padding:20px 24px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px}
+@media (max-width:860px){.finder{grid-template-columns:minmax(0,1fr)}}
+.finder h2{font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.finder .hint{margin:4px 0 14px;color:var(--muted)}
+.fgroup{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 12px;align-items:start;margin-bottom:10px}
+.fgroup h3{font-size:19px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding-top:6px}
+.fgroup h3 small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 15px var(--f-body);color:var(--ink);background:var(--open);border:1px solid var(--line);padding:6px 12px;cursor:pointer}
+.chip:hover{border-color:var(--class)}
+.chip[aria-pressed="true"]{background:var(--class);border-color:var(--class);color:var(--class-ink)}
+.chip:focus-visible,.room.sel-able:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.reset{margin-top:6px;font:600 14px var(--f-body);color:var(--class);background:none;border:0;padding:4px 0;cursor:pointer;text-decoration:underline}
+.routebox{border-left:6px solid var(--route);background:var(--open);padding:16px 20px;min-width:0}
+.routebox h3{font-size:28px;font-weight:700;text-transform:uppercase}
+.routebox p{margin:6px 0 0;color:var(--muted)}
+.routebox ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.routebox li::marker{font-weight:700;color:var(--route)}
+
+.maps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr));gap:20px}
+.map{background:var(--paper);border:1px solid var(--line);margin:0;min-width:0}
+.map figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.map figcaption h2{font-size:38px;font-weight:800;text-transform:uppercase}
+.map figcaption span{color:var(--muted);font-size:14px}
+.mapwrap{overflow-x:auto;padding:8px}
+.mapwrap svg{display:block;width:100%;height:auto;min-width:600px}
+
+.lower{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.lower{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--paper);border:1px solid var(--line);padding:20px 24px;min-width:0}
+.card h2{font-size:30px;font-weight:700;text-transform:uppercase;margin-bottom:12px}
+.rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:r}
+.rules li{counter-increment:r;display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;align-items:start}
+.rules li::before{content:counter(r);font-family:var(--f-display);font-weight:800;font-size:26px;line-height:34px;text-align:center;background:var(--route);color:#fff;height:36px}
+:root[data-theme="dark"] .rules li::before{color:#04210f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rules li::before{color:#04210f}}
+.rules b{display:block;font-family:var(--f-display);font-size:20px;letter-spacing:.03em;text-transform:uppercase}
+.legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.legend li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:center}
+.sw{height:24px;border:2px solid var(--wall)}
+.sw.c{background:var(--class)}.sw.o{background:var(--office)}.sw.y{background:var(--yard)}
+.sw.ex{background:var(--route);border-color:var(--route);color:#fff;font:800 12px var(--f-display);text-align:center;line-height:20px;letter-spacing:.06em}
+.sw.rt{border:0;height:24px;position:relative}
+.sw.rt::before{content:"";position:absolute;left:0;right:10px;top:9px;height:6px;background:var(--route)}
+.sw.rt::after{content:"";position:absolute;right:0;top:3px;border-left:12px solid var(--route);border-top:9px solid transparent;border-bottom:9px solid transparent}
+
+/* SVG map */
+.room{stroke:var(--wall);stroke-width:3}
+.t-class{fill:var(--class)}.t-office{fill:var(--office)}.t-plain{fill:var(--plain)}
+.t-open{fill:var(--open);stroke:none}.t-yard{fill:var(--yard)}.t-grass{fill:var(--grass)}
+.t-garden{fill:var(--garden);stroke:none}
+.room.sel-able{cursor:pointer}
+.room.sel-able:hover{stroke:var(--accent);stroke-width:5}
+.room.sel{stroke:var(--accent);stroke-width:8}
+.lbl{font-family:var(--f-display);font-weight:700;fill:var(--ink);pointer-events:none}
+.lbl.halo{paint-order:stroke;stroke:var(--paper);stroke-width:5px;stroke-linejoin:round}
+.t-class-txt{fill:var(--class-ink)}.t-office-txt{fill:var(--office-ink)}.t-yard-txt{fill:var(--yard-ink)}.t-grass-txt{fill:var(--grass-ink)}
+.lbl.big{font-weight:800}
+.stair{fill:var(--stair);stroke:var(--wall);stroke-width:2}
+.stl{stroke:var(--wall);stroke-width:1.5;opacity:.7}
+.field{fill:none;stroke:var(--wall);stroke-width:3;opacity:.55}
+.route .rc{fill:none;stroke:var(--route-case);stroke-width:12;stroke-linejoin:round;stroke-linecap:round}
+.route .rl{fill:none;stroke:var(--route);stroke-width:6;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#ah)}
+.route .sd{fill:var(--route);stroke:var(--route-case);stroke-width:3}
+.ahead{fill:var(--route);stroke:var(--route-case);stroke-width:1.2}
+.has-sel .route{opacity:.16}
+.has-sel .route.on{opacity:1}
+.route.on .rl{stroke-width:9;stroke-dasharray:22 12;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-34}}
+@media (prefers-reduced-motion:reduce){.route.on .rl{animation:none;stroke-dasharray:none}}
+.exit{fill:var(--route)}
+.exit-txt{fill:#fff;font-family:var(--f-display);font-weight:800;letter-spacing:.08em;pointer-events:none}
+:root[data-theme="dark"] .exit-txt{fill:#04210f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .exit-txt{fill:#04210f}}
+.badge{fill:var(--route);stroke:var(--route-case);stroke-width:3}
+.badge-arrow{fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+:root[data-theme="dark"] .badge-arrow{stroke:#04210f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .badge-arrow{stroke:#04210f}}
+.assembly-sign .a-bg{fill:var(--route);stroke:var(--route-case);stroke-width:3}
+.assembly-sign text{fill:#fff;font-family:var(--f-display);font-weight:800;letter-spacing:.06em}
+:root[data-theme="dark"] .assembly-sign text{fill:#04210f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .assembly-sign text{fill:#04210f}}
+.assembly-sign .a-fig{fill:none;stroke:currentColor}
+</style>
+
+<div class="wrap">
+  <header class="band">
+    <div>
+      <p class="kicker">Horizon International Bilingual School</p>
+      <h1>Evacuation Map</h1>
+      <p class="sub">For students · 1st floor and 2nd floor</p>
+    </div>
+    <div class="assembly">
+      <span>Assembly point</span>
+      <strong>Sport Yard</strong>
+      <em>1st floor · the orange area</em>
+    </div>
+  </header>
+
+  <section class="finder" aria-label="Find your classroom">
+    <div>
+      <h2>Find your classroom</h2>
+      <p class="hint">Select your room to see your route to the Sport Yard.</p>
+      <div id="chips"></div>
+      <button class="reset" id="reset" type="button" hidden>Show all routes</button>
+    </div>
+    <div class="routebox" id="routebox" aria-live="polite">
+      <h3>All routes shown</h3>
+      <p>Every green arrow leads to the Sport Yard. Pick your classroom to see the steps for your room.</p>
+    </div>
+  </section>
+
+  <div class="maps">
+    <figure class="map">
+      <figcaption><h2>1st floor</h2><span>Ground level · Sport Yard is here</span></figcaption>
+      <div class="mapwrap"><svg id="f1" viewBox="0 0 1230 1290" role="img" aria-label="1st floor evacuation plan"></svg></div>
+    </figure>
+    <figure class="map">
+      <figcaption><h2>2nd floor</h2><span>Use the stairs, then follow the 1st floor arrows</span></figcaption>
+      <div class="mapwrap"><svg id="f2" viewBox="0 0 1222 1290" role="img" aria-label="2nd floor evacuation plan"></svg></div>
+    </figure>
+  </div>
+
+  <div class="lower">
+    <section class="card">
+      <h2>When the alarm sounds</h2>
+      <ol class="rules">
+        <li><div><b>Stop and leave everything</b>Stop what you are doing. Leave your bags, books and phone where they are.</div></li>
+        <li><div><b>Line up behind your teacher</b>Walk quickly and quietly. Do not run, push or go back for anything.</div></li>
+        <li><div><b>Follow your route</b>Use the green arrows for your classroom. On the 2nd floor, take the stairs for your block and stay to the right.</div></li>
+        <li><div><b>Gather in the Sport Yard</b>Stand with your class. Your teacher will take attendance. Tell your teacher at once if someone is missing.</div></li>
+        <li><div><b>Wait for the all-clear</b>Stay in the Sport Yard until a teacher tells you it is safe to go back inside.</div></li>
+      </ol>
+    </section>
+    <section class="card">
+      <h2>Legend</h2>
+      <ul class="legend">
+        <li><span class="sw c"></span>Classrooms and labs</li>
+        <li><span class="sw o"></span>Staff and management offices</li>
+        <li><span class="sw y"></span>Assembly point: Sport Yard</li>
+        <li><span class="sw rt"></span>Escape route to the Sport Yard</li>
+        <li><span class="sw ex">EXIT</span>Exit to the outside</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahead"/></marker>
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.3" fill="var(--dot)"/><circle cx="9" cy="9" r="1.3" fill="var(--dot)"/></pattern>
+  </defs>
+</svg>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+function E(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function label(g,txt,cx,cy,fs,o){
+  o=o||{};var lines=txt.split('\n'),lh=fs*1.12;
+  var t=E('text',{'class':'lbl '+(o.cls||''),'font-size':fs,'text-anchor':o.anchor||'middle'},g);
+  var y0=cy-(lines.length-1)*lh/2+fs*0.35;
+  lines.forEach(function(s,i){var ts=E('tspan',{x:cx,y:y0+i*lh},t);ts.textContent=s;});
+  if(o.rot)t.setAttribute('transform','rotate(-90 '+cx+' '+cy+')');
+  return t;
+}
+var TYPE={c:'t-class',o:'t-office',p:'t-plain',n:'t-open',y:'t-yard',f:'t-grass',g:'t-garden'};
+function stairs(g,x,y,w,h,cross){
+  E('rect',{x:x,y:y,width:w,height:h,'class':'stair'},g);
+  var n=Math.floor(h/7),i;
+  for(i=1;i<n;i++)E('line',{x1:x,x2:x+w,y1:y+i*7,y2:y+i*7,'class':'stl'},g);
+  if(cross){E('line',{x1:x,y1:y,x2:x+w,y2:y+h,'class':'stl'},g);E('line',{x1:x+w,y1:y,x2:x,y2:y+h,'class':'stl'},g);}
+}
+function exitSign(g,x,y){
+  E('rect',{x:x-26,y:y-12,width:52,height:24,rx:3,'class':'exit'},g);
+  label(g,'EXIT',x,y,15,{cls:'exit-txt'});
+}
+function badge(g,x,y,dir,txt,ty){
+  E('circle',{cx:x,cy:y,r:17,'class':'badge'},g);
+  var d=dir==='down'?'M'+(x-7)+','+(y-4)+' L'+x+','+(y+5)+' L'+(x+7)+','+(y-4):'M'+(x-7)+','+(y+4)+' L'+x+','+(y-5)+' L'+(x+7)+','+(y+4);
+  E('path',{d:d,'class':'badge-arrow'},g);
+  if(txt)label(g,txt,x,ty,17,{cls:'halo'});
+}
+function assemblySign(g,cx,cy){
+  var s=E('g',{'class':'assembly-sign'},g);
+  E('rect',{x:cx-130,y:cy-26,width:260,height:52,rx:6,'class':'a-bg'},s);
+  label(s,'ASSEMBLY POINT',cx,cy,28,{});
+}
+function room(g,r){
+  var o=r[8]||{};
+  var rc=E('rect',{x:r[1],y:r[2],width:r[3],height:r[4],'class':'room '+TYPE[r[5]],'data-id':r[0]},g);
+  if(r[6])label(g,r[6],r[1]+r[3]/2,r[2]+r[4]/2,r[7],{rot:o.rot,cls:TYPE[r[5]]+'-txt'});
+  return rc;
+}
+
+/* ---------- Floor data ---------- */
+var F1=[
+ ['corrC',123,290,242,53,'n'],['lobA',205,715,115,180,'n'],['lobB',565,778,153,95,'n'],
+ ['garden',540,875,275,230,'g'],
+ ['libx',222,897,215,141,'p'],
+ ['wcs',80,468,42,57,'p','WC FOR\nSTAFF',12],['girl',123,560,82,65,'p','GIRL',18],['boy',206,560,82,65,'p','BOY',18],
+ ['maint',80,560,40,335,'p','MAINTENANCE',17,{rot:1}],['ware',80,897,40,141,'p','WAREHOUSE',16,{rot:1}],
+ ['dine',470,372,180,148,'p','DINING\nHALL',26],['kit',650,372,165,148,'p','KITCHEN\nAREA',26],
+ ['art',615,523,168,65,'p','Art',26],['ict',598,590,185,105,'p','ICT Room',24],
+ ['cash',718,778,65,45,'p','CASHIER',13],['oper',718,825,65,48,'p','OPERATION',12],
+ ['med',620,1135,92,70,'p','Medical',18],['cant',713,1135,102,70,'p','Canteen',18],
+ ['welf',207,628,78,85,'o','Head of\nWelfare',17],['disc',540,1103,78,102,'o','Discipline &\nEvent\nCoordinator',14],
+ ['proj',135,203,112,87,'c','Project\nRoom',28],['r8a',250,203,115,87,'c','8A',36],
+ ['r8b',123,343,124,95,'c','8B',36],['tr',250,343,115,95,'c',"Teacher's\nRoom",26],
+ ['math',123,628,82,127,'c','Math\nManipulatives',17,{rot:1}],['music',123,758,82,137,'c','Music',28],
+ ['lib',123,897,99,141,'c','Library',30],
+ ['wida',700,698,83,77,'c','WIDA\nRoom',21],['adm',612,875,86,97,'c','Admission\nOffice',19],['r10a',700,875,83,170,'c','10A',34],
+ ['sport',78,1040,359,165,'y'],['foot',815,730,305,232,'f']
+];
+var F2=[
+ ['college',220,308,95,54,'p','College\nCounselor',15],['hr',557,915,108,85,'p','HR &\nAccountant',17],['sc',730,1003,85,95,'p','School\nCounselor',16],
+ ['cam',45,213,133,92,'c','Cambridge\nExam',24],['r9a',180,213,135,92,'c','9A',38],['r9b',45,365,133,100,'c','9B',38],['r7a',180,365,135,100,'c','7A',38],
+ ['phys',110,587,185,70,'c','Physics Lab',26],['r6b',110,660,88,135,'c','6B',36],['r6a',110,797,88,133,'c','6A',36],['sci',110,933,113,154,'c','Science\nLab',26],
+ ['ha',220,660,75,86,'o','HEAD OF\nACADEMIC',15],['vp',222,835,103,95,'o','VICE-\nPRINCIPAL',20],
+ ['conf',615,622,200,115,'o','CONFERENCE\nHALL',28],['pri',730,915,82,85,'o','PRINCIPAL',15],
+ ['r11a',730,737,82,75,'c','11A',34],['r12a',582,815,123,97,'c','12A',38],
+ ['sport2',57,1110,400,150,'y'],['foot2',850,768,318,235,'f']
+];
+
+/* ---------- Routes ---------- */
+var D=[[455,1062],[405,1062]];
+var C1=[[455,316]].concat(D);
+var A1=[[455,805]].concat(D);
+var B1=[[455,830]].concat(D);
+function p1(a,b){return a.concat(b);}
+var C2s=[[198,316],[455,316]].concat(D);
+var A2s=[[277,766],[277,805]].concat(A1);
+var B2s=[[651,754],[651,830]].concat(B1);
+var ROUTES=[
+ {id:'proj',n:'Project Room',fl:1,blk:'C',g:'C1',a:[[225,250],[225,316]].concat(C1)},
+ {id:'r8a',n:'8A',fl:1,blk:'C',g:'C1',a:[[307,250],[307,316]].concat(C1)},
+ {id:'r8b',n:'8B',fl:1,blk:'C',g:'C1',a:[[215,400],[215,316]].concat(C1)},
+ {id:'tr',n:"Teacher's Room",fl:1,blk:'C',g:'C1',a:[[307,400],[307,316]].concat(C1)},
+ {id:'math',n:'Math Manipulatives',fl:1,blk:'A',g:'A1',a:[[150,735],[245,735],[245,805]].concat(A1)},
+ {id:'music',n:'Music',fl:1,blk:'A',g:'A1',a:[[150,805]].concat(A1)},
+ {id:'lib',n:'Library',fl:1,blk:'A',g:'LIB',a:[[170,985],[170,1062]]},
+ {id:'wida',n:'WIDA Room',fl:1,blk:'B',g:'B1',a:[[742,735],[675,735],[675,830]].concat(B1)},
+ {id:'adm',n:'Admission Office',fl:1,blk:'B',g:'B1',a:[[655,925],[655,830]].concat(B1)},
+ {id:'r10a',n:'10A',fl:1,blk:'B',g:'R10',a:[[741,990],[741,1090],[405,1090]]},
+ {id:'cam',n:'Cambridge Exam',fl:2,blk:'C',g:'C2',b:[[150,255],[150,335],[100,335]],a:C2s},
+ {id:'r9a',n:'9A',fl:2,blk:'C',g:'C2',b:[[200,260],[200,335],[100,335]],a:C2s},
+ {id:'r9b',n:'9B',fl:2,blk:'C',g:'C2',b:[[150,420],[150,335],[100,335]],a:C2s},
+ {id:'r7a',n:'7A',fl:2,blk:'C',g:'C2',b:[[200,420],[200,335],[100,335]],a:C2s},
+ {id:'phys',n:'Physics Lab',fl:2,blk:'A',g:'A2',b:[[150,622],[209,622],[209,790],[238,790]],a:A2s},
+ {id:'r6b',n:'6B',fl:2,blk:'A',g:'A2',b:[[155,730],[209,730],[209,790],[238,790]],a:A2s},
+ {id:'r6a',n:'6A',fl:2,blk:'A',g:'A2',b:[[155,865],[209,865],[209,790],[238,790]],a:A2s},
+ {id:'sci',n:'Science Lab',fl:2,blk:'A',g:'A2',b:[[167,1010],[209,1010],[209,790],[238,790]],a:A2s},
+ {id:'r11a',n:'11A',fl:2,blk:'B',g:'B2',b:[[771,775],[676,775]],a:B2s},
+ {id:'r12a',n:'12A',fl:2,blk:'B',g:'B2',b:[[690,870],[690,775],[676,775]],a:B2s}
+];
+var YARD='Follow the School Yard south and enter the Sport Yard. Join your class line.';
+var STEPS={
+ C1:['Step into the Block C corridor and walk east.','Leave Block C through the east exit.',YARD],
+ C2:['Leave your room and walk to the stairs at the west end of the Block C corridor.','Go down to the 1st floor.','Walk east along the corridor and leave Block C through the east exit.',YARD],
+ A1:['Go into the Block A lobby.','Leave through the east door of Block A.',YARD],
+ LIB:['Leave the Library through its south door.','Walk straight onto the Sport Yard and join your class line.'],
+ A2:['Walk to the Block A stairs, between Head of Academic and Vice-Principal.','Go down to the 1st floor.','Cross the Block A lobby and leave through the east door.',YARD],
+ B1:['Go into the Block B lobby near Reception.','Leave through the west door next to Reception.',YARD],
+ R10:['Leave 10A and go out into the Garden.','Walk west through the Garden, past the Entrance side.','Enter the Sport Yard from its east side and join your class line.'],
+ B2:['Walk to the Block B stairs, next to the Conference Hall.','Go down to the 1st floor and cross the Block B lobby.','Leave through the west door next to Reception.',YARD]
+};
+
+/* ---------- Draw ---------- */
+var s1=document.getElementById('f1'),s2=document.getElementById('f2');
+var g1=E('g',{},s1),g2=E('g',{},s2);
+E('rect',{x:0,y:0,width:1230,height:1290,fill:'var(--paper)'},g1);
+E('rect',{x:0,y:0,width:1222,height:1290,fill:'var(--paper)'},g2);
+
+function drawRooms(g,list,floor){
+  list.forEach(function(r){
+    var rc=room(g,r);
+    if(r[0]==='garden')E('rect',{x:r[1],y:r[2],width:r[3],height:r[4],fill:'url(#dots)'},g);
+  });
+}
+drawRooms(g1,F1,1);drawRooms(g2,F2,2);
+
+/* field markings */
+E('line',{x1:967,y1:730,x2:967,y2:962,'class':'field'},g1);E('circle',{cx:967,cy:846,r:55,'class':'field'},g1);
+E('line',{x1:258,y1:1040,x2:258,y2:1205,'class':'field'},g1);E('circle',{cx:258,cy:1122,r:50,'class':'field'},g1);
+E('line',{x1:1009,y1:768,x2:1009,y2:1003,'class':'field'},g2);E('circle',{cx:1009,cy:885,r:55,'class':'field'},g2);
+
+/* stairs */
+stairs(g1,160,293,40,47);stairs(g1,265,720,25,55);stairs(g1,612,700,78,70);
+stairs(g2,47,308,68,54);stairs(g2,220,748,75,87,true);stairs(g2,632,737,74,75);stairs(g2,730,878,50,34);
+
+/* free labels */
+function L(g,t,x,y,fs,o){o=o||{};o.cls=(o.cls||'')+' halo';return label(g,t,x,y,fs,o);}
+L(g1,'SCHOOL\nYARD',433,683,32);L(g1,'BLOCK C',372,350,21,{anchor:'start'});L(g1,'BLOCK A',262,868,21);L(g1,'BLOCK B',641,800,21);
+L(g1,'GARDEN',655,1015,28);L(g1,'PLAY GROUND',970,1095,28);L(g1,'FOOTBALL YARD',967,846,30,{cls:'t-grass-txt big'}).setAttribute('class','lbl t-grass-txt big');
+label(g1,'SPORT YARD',258,1118,38,{cls:'t-yard-txt big'});
+L(g1,'ENTRANCE',530,1250,42);
+E('path',{d:'M530,1228 L530,1206 M520,1216 L530,1206 L540,1216',fill:'none',stroke:'var(--ink)','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round'},g1);
+
+L(g2,'SCHOOL\nYARD',447,722,32);L(g2,'BLOCK C',330,342,21,{anchor:'start'});L(g2,'BLOCK A',352,892,21,{anchor:'start'});L(g2,'BLOCK B',480,868,21,{anchor:'start'});
+L(g2,'PLAY GROUND',1000,1120,28);
+label(g2,'FOOTBALL YARD',1009,885,30,{cls:'t-grass-txt big'});
+label(g2,'SPORT YARD',257,1160,34,{cls:'t-yard-txt big'});
+label(g2,'Ground level · 1st floor',257,1196,19,{cls:'t-yard-txt'});
+
+/* routes */
+var routeEls={};
+function addRoute(svgG,r,pts,withStart){
+  var d='M'+pts.map(function(p){return p[0]+','+p[1];}).join(' L');
+  var g=E('g',{'class':'route','data-r':r.id},svgG);
+  E('path',{d:d,'class':'rc'},g);
+  E('path',{d:d,'class':'rl'},g);
+  if(withStart)E('circle',{cx:pts[0][0],cy:pts[0][1],r:8,'class':'sd'},g);
+  (routeEls[r.id]=routeEls[r.id]||[]).push(g);
+}
+ROUTES.forEach(function(r){
+  if(r.fl===1){addRoute(g1,r,r.a,true);}
+  else{addRoute(g2,r,r.b,true);addRoute(g1,r,r.a,false);}
+});
+
+/* exits, badges, assembly sign */
+exitSign(g1,365,316);exitSign(g1,320,805);exitSign(g1,565,830);exitSign(g1,170,1038);
+badge(g1,180,316,'up','FROM 2F',296);badge(g1,277,747,'up','FROM 2F',706);badge(g1,651,735,'up','FROM 2F',688);
+badge(g2,81,335,'down','TO 1F',382);badge(g2,257,790,'down','TO 1F',852);badge(g2,652,775,'down','TO 1F',722);
+assemblySign(g1,258,1172);
+assemblySign(g2,257,1235);
+
+/* ---------- Interaction ---------- */
+var byId={};ROUTES.forEach(function(r){byId[r.id]=r;});
+var rects={};
+document.querySelectorAll('.room').forEach(function(rc){
+  var id=rc.getAttribute('data-id');
+  if(byId[id]){
+    rects[id]=rc;rc.classList.add('sel-able');
+    rc.setAttribute('tabindex','0');rc.setAttribute('role','button');
+    rc.setAttribute('aria-label','Show escape route for '+byId[id].n);
+    rc.addEventListener('click',function(){select(id);});
+    rc.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();select(id);}});
+  }
+});
+var chipsHost=document.getElementById('chips'),chips={};
+function group(title,sub,list){
+  var wrap=document.createElement('div');wrap.className='fgroup';
+  var h=document.createElement('h3');h.innerHTML=title+'<small>'+sub+'</small>';wrap.appendChild(h);
+  var c=document.createElement('div');c.className='chips';
+  list.forEach(function(r){
+    var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=r.n;b.setAttribute('aria-pressed','false');
+    b.addEventListener('click',function(){select(r.id);});
+    chips[r.id]=b;c.appendChild(b);
+  });
+  wrap.appendChild(c);chipsHost.appendChild(wrap);
+}
+[1,2].forEach(function(f){
+  ['C','A','B'].forEach(function(b){
+    var l=ROUTES.filter(function(r){return r.fl===f&&r.blk===b;});
+    if(l.length)group((f===1?'1st':'2nd')+' floor','Block '+b,l);
+  });
+});
+var box=document.getElementById('routebox'),reset=document.getElementById('reset');
+var defaultBox=box.innerHTML,cur=null;
+function select(id){
+  if(cur===id){clear();return;}
+  cur=id;var r=byId[id];
+  [s1,s2].forEach(function(s){s.classList.add('has-sel');});
+  document.querySelectorAll('.route').forEach(function(g){g.classList.toggle('on',g.getAttribute('data-r')===id);});
+  Object.keys(chips).forEach(function(k){chips[k].setAttribute('aria-pressed',k===id?'true':'false');});
+  Object.keys(rects).forEach(function(k){rects[k].classList.toggle('sel',k===id);});
+  box.innerHTML='';
+  var h=document.createElement('h3');h.textContent=r.n+' → Sport Yard';box.appendChild(h);
+  var p=document.createElement('p');p.textContent=(r.fl===1?'1st floor':'2nd floor')+' · Block '+r.blk;box.appendChild(p);
+  var ol=document.createElement('ol');
+  STEPS[r.g].forEach(function(t){var li=document.createElement('li');li.textContent=t;ol.appendChild(li);});
+  box.appendChild(ol);reset.hidden=false;
+}
+function clear(){
+  cur=null;[s1,s2].forEach(function(s){s.classList.remove('has-sel');});
+  document.querySelectorAll('.route.on').forEach(function(g){g.classList.remove('on');});
+  Object.keys(chips).forEach(function(k){chips[k].setAttribute('aria-pressed','false');});
+  Object.keys(rects).forEach(function(k){rects[k].classList.remove('sel');});
+  box.innerHTML=defaultBox;reset.hidden=true;
+}
+reset.addEventListener('click',clear);
+})();
+</script>
+
+</body></html>
